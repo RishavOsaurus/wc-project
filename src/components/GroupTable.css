@@ -157,6 +157,15 @@
   font-size: 13px;
 }
 
+.locked-row {
+  background: linear-gradient(90deg, rgba(255,255,255,0.02), rgba(0,0,0,0));
+  opacity: 0.95;
+}
+
+.locked-row .drag-handle {
+  visibility: hidden;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .group-header h2 {

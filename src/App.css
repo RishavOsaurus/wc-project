@@ -153,8 +153,8 @@ body {
 }
 
 .nav-button {
-  background: var(--accent-primary);
-  color: white;
+  background: var(--button-bg, var(--accent-primary));
+  color: var(--button-text, white);
   border: none;
   padding: 12px 24px;
   border-radius: 8px;
@@ -163,15 +163,140 @@ body {
   cursor: pointer;
   transition: all 0.2s ease;
   box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 8px;
+  text-decoration: none;
 }
 
 .nav-button:hover {
-  background: var(--accent-secondary);
+  background: var(--button-bg-hover, var(--accent-secondary));
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
+/* Action buttons container: spacing and wrapping */
+.nav-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* Header action button (e.g. "Third Place Selector") */
+.replica-cta {
+  background: var(--button-bg);
+  color: var(--button-text);
+  border: none;
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+}
+.replica-cta:hover {
+  background: var(--button-bg-hover);
+}
+
+/* Back link used in page headers */
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  color: var(--text-primary);
+  border: none;
+  padding: 6px 10px;
+  margin-right: 8px;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+.back-link:hover {
+  color: var(--accent-primary);
+}
+
+/* Header layout helpers for replica pages */
+.replica-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+.replica-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Title and header text sizing for replica pages */
+.replica-title {
+  font-size: 28px;
+  font-weight: 800;
+  margin: 0;
+  line-height: 1.05;
+  text-transform: none;
+}
+.replica-sub {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+/* Back icon/text helpers */
+.back-icon {
+  font-size: 18px;
+  line-height: 1;
+  display: inline-block;
+}
+.back-text {
+  display: inline-block;
+  margin-left: 6px;
+  font-weight: 700;
+}
+
+
+/* Responsive adjustments for buttons */
+@media (max-width: 600px) {
+  .nav-button {
+    padding: 10px 12px;
+    font-size: 14px;
+    width: 100%;
+    justify-content: center;
+    box-shadow: none;
+  }
+
+  .replica-cta {
+    padding: 8px 10px;
+    font-size: 14px;
+    min-width: 0;
+  }
+
+  .back-link {
+    padding: 6px 8px;
+    font-size: 14px;
+  }
+
+  /* Mobile: compact header */
+  .replica-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .replica-left { flex-direction: row; align-items: center; }
+  .replica-title { font-size: 20px; }
+  .replica-sub { font-size: 13px; }
+  /* Hide back-text on very small screens (icon-only) */
+  .back-text { display: none; }
+
+  /* When action buttons share a row, make them stack vertically */
+  .nav-actions {
+    display: flex !important;
+    flex-direction: column;
+    gap: 8px !important;
+  }
 }
 
 .nav-button:active {

@@ -14,6 +14,10 @@
   --accent-secondary: #1d4ed8;
   --shadow-primary: rgba(0, 0, 0, 0.1);
   --shadow-secondary: rgba(0, 0, 0, 0.05);
+  /* button-specific fallbacks for theme-aware buttons */
+  --button-bg: var(--accent-primary);
+  --button-text: white;
+  --button-bg-hover: var(--accent-secondary);
 }
 
 /* Dark theme */
@@ -30,6 +34,9 @@
   --accent-secondary: #3b82f6;
   --shadow-primary: rgba(0, 0, 0, 0.3);
   --shadow-secondary: rgba(0, 0, 0, 0.2);
+  --button-bg: var(--accent-primary);
+  --button-text: #021025;
+  --button-bg-hover: var(--accent-secondary);
 }
 
 * {

@@ -1,5 +1,7 @@
 import './App.css';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useThirdPlace } from './contexts/ThirdPlaceContext';
 import GroupTable from './components/GroupTable';
 import ThemeToggle from './components/ThemeToggle';
 // import ThirdPlaceModal from './components/ThirdPlaceModal';
@@ -10,7 +12,14 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import RoundOf32 from './components/RoundOf32';
 
 function HomeContent() {
-  const [groupTeamOrders, setGroupTeamOrders] = useState<Record<string, (Team & { uniqueId: string })[]>>({});
+  const [groupTeamOrders, setGroupTeamOrders] = useState<Record<string, (Team & { uniqueId: string })[]>>(() => {
+    try {
+      const raw = localStorage.getItem('groupTeamOrders');
+      return raw ? JSON.parse(raw) : {};
+    } catch {
+      return {};
+    }
+  });
   // modal removed in favor of full page selector
 
   const defaultThirdPlaceTeams = worldCupGroups
@@ -26,19 +35,47 @@ function HomeContent() {
   const thirdPlaceTeams = defaultThirdPlaceTeams;
 
   const handleGroupOrderChange = (groupName: string, teams: (Team & { uniqueId: string })[]) => {
-    setGroupTeamOrders(prev => ({
-      ...prev,
-      [groupName]: teams
-    }));
+    setGroupTeamOrders(prev => {
+      const next = { ...prev, [groupName]: teams };
+      // compute current third-place teams from updated orders
+      try {
+        const updatedThirds = worldCupGroups
+          .map(g => {
+            const ordered = next[g.name];
+            if (ordered && ordered.length >= 3) return { ...ordered[2], groupName: g.name };
+            return g.teams.length >= 3 ? { ...g.teams[2], groupName: g.name } : null;
+          })
+          .filter(Boolean) as (Team & { groupName: string })[];
+        // update context immediately so Third Place selector reads latest
+        try { setDraft(updatedThirds); setOrder(updatedThirds); } catch {}
+      } catch (e) {
+        // ignore
+      }
+      return next;
+    });
   };
 
   
 
+  const navigate = useNavigate();
+  const { setDraft, setOrder } = useThirdPlace();
+
+  // persist group orders so they survive route navigation
+  useEffect(() => {
+    try { localStorage.setItem('groupTeamOrders', JSON.stringify(groupTeamOrders)); } catch {}
+  }, [groupTeamOrders]);
+
   const navigateToThirdPlace = () => {
-    // persist draft so the page can read it
-    try { localStorage.setItem('thirdPlaceDraft', JSON.stringify(thirdPlaceTeams)); } catch {}
-    // navigate to dedicated page
-    window.location.href = '/third-place';
+    // write current third-place teams into context so the selector always has data
+    try {
+      setDraft(thirdPlaceTeams);
+      setOrder(thirdPlaceTeams);
+      // also keep localStorage backup for compatibility
+      localStorage.setItem('thirdPlaceDraft', JSON.stringify(thirdPlaceTeams));
+    } catch (e) {
+      // ignore
+    }
+    navigate('/third-place');
   };
 
   return (
@@ -56,13 +93,16 @@ function HomeContent() {
       </header>
 
       <div className="groups-grid">
-        {worldCupGroups.map((group) => (
-          <GroupTable
-            key={group.name}
-            group={group}
-            onOrderChange={(teams) => handleGroupOrderChange(group.name, teams)}
-          />
-        ))}
+        {worldCupGroups.map((group) => {
+          const overriddenTeams = groupTeamOrders[group.name] || group.teams;
+          return (
+            <GroupTable
+              key={group.name}
+              group={{ ...group, teams: overriddenTeams }}
+              onOrderChange={(teams) => handleGroupOrderChange(group.name, teams)}
+            />
+          );
+        })}
       </div>
 
       <div className="navigation-section bottom-nav">
