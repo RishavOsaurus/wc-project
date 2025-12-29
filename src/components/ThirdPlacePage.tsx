@@ -13,6 +13,23 @@ export default function ThirdPlacePage() {
   const [teams, setTeams] = useState<(Team & { groupName?: string })[]>(() => draft || []);
   const [locked, setLocked] = useState(false);
 
+  // Helper: determine whether the group stage has been completed (persisted orders exist)
+  function isGroupStageComplete() {
+    try {
+      const raw = localStorage.getItem('groupTeamOrders');
+      if (!raw) return false;
+      const orders = JSON.parse(raw) as Record<string, (Team & { uniqueId: string })[]>;
+      // require an entry for every configured group with at least 3 teams ordered
+      for (const g of worldCupGroups) {
+        const arr = orders[g.name];
+        if (!arr || !Array.isArray(arr) || arr.length < 3) return false;
+      }
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   // slot order used elsewhere (Round of 32 expects these winners)
 
   // helper to get group winner by letter
@@ -76,6 +93,11 @@ export default function ThirdPlacePage() {
   // On mount: compute qualified top-8 (winners for the slotOrder), log them,
   // then try to find a mapping in group_combo.json that matches current third-place tokens
   useEffect(() => {
+    // enforce flow: if group-stage isn't done, send user back to groups page
+    if (!isGroupStageComplete()) {
+      navigate('/');
+      return;
+    }
     // compute winners for the 8 slots (use current persisted orders when available)
     const winners = SLOT_ORDER.map(slot => ({ slot, team: getCurrentGroupWinner(slot.slice(1)) }));
 

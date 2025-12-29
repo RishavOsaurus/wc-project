@@ -42,3 +42,91 @@
   border-radius: 12px;
   box-shadow: 0 6px 14px var(--shadow-primary);
 }
+
+.team-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  border: 1px solid var(--border-primary);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  margin: 4px 0;
+}
+
+.team-box:hover {
+  background: var(--bg-secondary);
+}
+
+.team-box.selected {
+  background: var(--accent-primary);
+  color: white;
+}
+
+.team-box.disabled {
+  opacity: 0.6;
+  cursor: default;
+  pointer-events: none;
+}
+
+/* Winner modal */
+.winner-card {
+  background: linear-gradient(180deg, var(--bg-secondary), rgba(14,18,28,0.95));
+  color: var(--text-primary);
+  padding: 28px 36px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  box-shadow: 0 32px 90px rgba(2,6,23,0.6), inset 0 1px 0 rgba(255,255,255,0.02);
+  animation: popIn 560ms cubic-bezier(.2,.9,.3,1);
+}
+.winner-visual { width: 96px; height: 96px; display:flex; align-items:center; justify-content:center; border-radius:12px; background: linear-gradient(135deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01)); box-shadow: 0 8px 30px rgba(2,6,23,0.35); transform: translateY(-6px); }
+.winner-flag { font-size: 56px; display:block; animation: flagPop 900ms cubic-bezier(.2,.9,.3,1); }
+.winner-title { font-size: 13px; color: var(--text-secondary); text-transform: uppercase; letter-spacing:1px; }
+.winner-name { font-size: 30px; font-weight: 800; color: var(--text-primary); text-shadow: 0 4px 18px rgba(0,0,0,0.6); animation: nameGlow 1400ms ease-in-out both; }
+.winner-close { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.04); color: var(--text-primary); font-size: 18px; margin-left: 8px; cursor: pointer; padding: 6px 10px; border-radius: 8px; }
+
+
+@keyframes popIn {
+  0% { transform: scale(.6); opacity: 0; }
+  60% { transform: scale(1.05); opacity: 1; }
+  100% { transform: scale(1); }
+}
+
+@keyframes flagPop {
+  0% { transform: translateY(10px) scale(.6) rotate(-6deg); opacity: 0; }
+  60% { transform: translateY(-6px) scale(1.08) rotate(2deg); opacity: 1; }
+  100% { transform: translateY(0) scale(1) rotate(0); }
+}
+
+@keyframes nameGlow {
+  0% { filter: blur(2px); opacity: 0.6; transform: translateY(6px); }
+  50% { filter: blur(0); opacity: 1; transform: translateY(0); }
+  100% { filter: blur(0); opacity: 1; transform: translateY(0); }
+}
+
+/* confetti */
+.confetti { position: absolute; left:0; right:0; top:0; bottom:0; pointer-events:none; }
+.confetti span { position:absolute; width:10px; height:16px; border-radius:2px; opacity:0.95; transform-origin:center; }
+.confetti span:nth-child(1){ background:#ff4757; left:30%; top:10%; animation: conf1 1400ms linear both; }
+.confetti span:nth-child(2){ background:#ffa502; left:45%; top:8%; animation: conf2 1500ms linear 80ms both; }
+.confetti span:nth-child(3){ background:#ff6b81; left:60%; top:12%; animation: conf3 1500ms linear 160ms both; }
+.confetti span:nth-child(4){ background:#7bed9f; left:20%; top:6%; animation: conf4 1600ms linear 200ms both; }
+.confetti span:nth-child(5){ background:#70a1ff; left:75%; top:6%; animation: conf5 1600ms linear 260ms both; }
+.confetti span:nth-child(6){ background:#ffb8b8; left:10%; top:18%; animation: conf1 1400ms linear 120ms both; }
+.confetti span:nth-child(7){ background:#ffd32a; left:85%; top:20%; animation: conf2 1500ms linear 200ms both; }
+.confetti span:nth-child(8){ background:#c8f7ff; left:50%; top:20%; animation: conf3 1500ms linear 260ms both; }
+.confetti span:nth-child(9){ background:#caffbf; left:40%; top:18%; animation: conf4 1600ms linear 320ms both; }
+.confetti span:nth-child(10){ background:#d6a4ff; left:65%; top:16%; animation: conf5 1600ms linear 380ms both; }
+
+@keyframes conf1 { 0% { transform: translateY(0) rotate(0) scale(1); opacity:1 } 100% { transform: translateY(220px) rotate(520deg) scale(.8); opacity:0 } }
+@keyframes conf2 { 0% { transform: translateY(0) rotate(0) scale(1); opacity:1 } 100% { transform: translateY(240px) rotate(360deg) scale(.9); opacity:0 } }
+@keyframes conf3 { 0% { transform: translateY(0) rotate(0) scale(1); opacity:1 } 100% { transform: translateY(200px) rotate(420deg) scale(.7); opacity:0 } }
+@keyframes conf4 { 0% { transform: translateY(0) rotate(0) scale(1); opacity:1 } 100% { transform: translateY(260px) rotate(300deg) scale(.9); opacity:0 } }
+@keyframes conf5 { 0% { transform: translateY(0) rotate(0) scale(1); opacity:1 } 100% { transform: translateY(230px) rotate(480deg) scale(.8); opacity:0 } }
+
+.winner-share { display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
+.share-btn { background: linear-gradient(90deg,#0ea5ff,#7c3aed); color:white; border:none; padding:6px 10px; border-radius:8px; cursor:pointer; font-weight:600; box-shadow: 0 8px 20px rgba(14,165,255,0.12); }
+.share-btn:hover { transform: translateY(-2px); }
