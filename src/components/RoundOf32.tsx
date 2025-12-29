@@ -7,6 +7,7 @@ import { useThirdPlace } from '../contexts/ThirdPlaceContext';
 import type { Matchup } from '../contexts/ThirdPlaceContext';
 
 type StoredTeam = Team & { groupName?: string };
+type NameFlag = { name: string; flag?: string; groupName?: string };
 
 // reuse Matchup type exported from context
 // Base Round-of-32 slot keys (left-side slot token indicates which team fills that position)
@@ -74,46 +75,33 @@ export default function RoundOf32() {
   // selections are transient only; do NOT persist so refresh clears picks
 
   // Build matches using mapping if available, otherwise fallback to naive index pairing
-  const [matches, setMatches] = useState<Matchup[]>([]);
-
-  useEffect(() => {
+  const matches: Matchup[] = useMemo(() => {
     const navState = location.state as unknown as { matchups?: Matchup[]; mapping?: Record<string,string>; option?: string } | null;
     console.log('RoundOf32 location.state:', navState);
 
     // If matchups present in context and they cover all expected slots and are fully resolved, prefer them.
     if (matchups && Array.isArray(matchups) && matchups.length >= slotOrder.length && matchups.every(m => m.opponent.name !== 'TBD')) {
-      setMatches(matchups);
-      try { localStorage.setItem('round32_matchups', JSON.stringify({ option: localStorage.getItem('round32_option') || null, mapping: mapping || null, matchups: matchups })); } catch {
-        /* ignore */
-      }
+      try { localStorage.setItem('round32_matchups', JSON.stringify({ option: localStorage.getItem('round32_option') || null, mapping: mapping || null, matchups: matchups })); } catch { /* ignore */ }
       console.log('Using matchups from ThirdPlaceContext:', matchups);
-      // Diagnostic: log resolved mapping -> team so we can verify source
       try {
         console.group('Knockouts - resolved slots from context.matchups');
         (matchups as Matchup[]).forEach((m) => console.log(m.slot, '->', m.opponent?.name || m.opponent));
         console.groupEnd();
-      } catch {
-        /* ignore */
-      }
-      return;
+      } catch { /* ignore */ }
+      return matchups;
     }
 
     // navigation state still allowed (e.g., immediate transition) but only if it's complete
     // otherwise fallthrough to build the full set from mapping/resolvers.
     if (navState && Array.isArray(navState.matchups) && (navState.matchups || []).length >= slotOrder.length) {
-      setMatches(navState.matchups || []);
-      try { localStorage.setItem('round32_matchups', JSON.stringify({ option: navState.option || null, mapping: navState.mapping || null, matchups: navState.matchups })); } catch {
-        /* ignore */
-      }
+      try { localStorage.setItem('round32_matchups', JSON.stringify({ option: navState.option || null, mapping: navState.mapping || null, matchups: navState.matchups })); } catch { /* ignore */ }
       console.log('Using matchups from navigation state:', navState);
       try {
         console.group('Knockouts - resolved slots from navigation.state');
         (navState.matchups || []).forEach((m) => console.log(m.slot, '->', m.opponent?.name || m.opponent));
         console.groupEnd();
-      } catch {
-        /* ignore */
-      }
-      return;
+      } catch { /* ignore */ }
+      return navState.matchups || [];
     }
 
     // Build matches using mapping if available, otherwise fallback to naive index pairing
@@ -131,9 +119,7 @@ export default function RoundOf32() {
           const ordered = orders[groupName];
           if (ordered && ordered.length >= pos) return ordered[pos - 1];
         }
-      } catch {
-        /* ignore */
-      }
+      } catch { /* ignore */ }
       // for third-place tokens prefer current thirdPlaces (live selection)
       if (pos === 3) {
         const foundThird = thirdPlaces.find(t => (t.groupName || '').toUpperCase().includes(letter));
@@ -150,16 +136,15 @@ export default function RoundOf32() {
       const resolvedLeft = resolveToken(slot);
       const winner = resolvedLeft || getGroupWinner(slot.slice(1));
 
-      let opponent: StoredTeam | { name: string; flag?: string } = { name: 'TBD', flag: '' };
+      let opponent: StoredTeam | NameFlag = { name: 'TBD', flag: '' };
       const token = fullMapping[slot];
       if (token) {
         const found = resolveToken(token);
         opponent = found ? (found as StoredTeam) : { name: token, flag: '' };
       }
-      return { slot, winner, opponent };
+      return { slot, winner, opponent } as Matchup;
     });
 
-    setMatches(built);
     try {
       // Diagnostic logging: mapping token -> resolved team
       console.group('Knockouts - mapping resolution');
@@ -169,17 +154,14 @@ export default function RoundOf32() {
         console.log(b.slot, 'token->', fullMapping?.[b.slot], 'resolved->', (b.opponent as StoredTeam).name || b.opponent);
       });
       console.groupEnd();
-    } catch {
-      /* ignore */
-    }
+    } catch { /* ignore */ }
     try {
       const option = localStorage.getItem('round32_option') || null;
       localStorage.setItem('round32_matchups', JSON.stringify({ option, mapping: fullMapping, matchups: built }));
-    } catch {
-      /* ignore */
-    }
+    } catch { /* ignore */ }
     console.log('Built Round-of-32 matchups from mapping:', fullMapping, built);
-  }, [location.key, location.state, mapping, thirdPlaces, matchups]);
+    return built;
+  }, [location.state, mapping, thirdPlaces, matchups]);
 
   // Helpers to derive winners and downstream matchups
   const pickTeam = (match: Matchup | undefined, choice?: 'left' | 'right') => {
@@ -201,25 +183,25 @@ export default function RoundOf32() {
     return pairs;
   }, [r32Winners]);
 
-  const r16Winners = useMemo(() => r16Matches.map((m, i) => pickTeam({ slot: `R16-${i}`, winner: m.left as any, opponent: m.right as any } as Matchup, selectedR16[i])), [r16Matches, selectedR16]);
+  const r16Winners = useMemo(() => r16Matches.map((m, i) => pickTeam({ slot: `R16-${i}`, winner: m.left as NameFlag, opponent: m.right as NameFlag } as Matchup, selectedR16[i])), [r16Matches, selectedR16]);
 
   const qfMatches = useMemo(() => {
-    const pairs: Array<{ left?: any; right?: any }> = [];
+    const pairs: Array<{ left?: StoredTeam | NameFlag; right?: StoredTeam | NameFlag }> = [];
     for (let i = 0; i < 4; i++) {
-      pairs.push({ left: r16Winners[2 * i] || { name: 'TBD' }, right: r16Winners[2 * i + 1] || { name: 'TBD' } });
+      pairs.push({ left: r16Winners[2 * i] || { name: 'TBD', flag: '' }, right: r16Winners[2 * i + 1] || { name: 'TBD', flag: '' } });
     }
     return pairs;
   }, [r16Winners]);
 
-  const qfWinners = useMemo(() => qfMatches.map((m, i) => pickTeam({ slot: `QF-${i}`, winner: m.left as any, opponent: m.right as any } as Matchup, selectedQF[i])), [qfMatches, selectedQF]);
+  const qfWinners = useMemo(() => qfMatches.map((m, i) => pickTeam({ slot: `QF-${i}`, winner: m.left as NameFlag, opponent: m.right as NameFlag } as Matchup, selectedQF[i])), [qfMatches, selectedQF]);
 
   const sfMatches = useMemo(() => [{ left: qfWinners[0] || { name: 'TBD' }, right: qfWinners[1] || { name: 'TBD' } }, { left: qfWinners[2] || { name: 'TBD' }, right: qfWinners[3] || { name: 'TBD' } }], [qfWinners]);
 
-  const sfWinners = useMemo(() => sfMatches.map((m, i) => pickTeam({ slot: `SF-${i}`, winner: m.left as any, opponent: m.right as any } as Matchup, selectedSF[i])), [sfMatches, selectedSF]);
+  const sfWinners = useMemo(() => sfMatches.map((m, i) => pickTeam({ slot: `SF-${i}`, winner: m.left as NameFlag, opponent: m.right as NameFlag } as Matchup, selectedSF[i])), [sfMatches, selectedSF]);
 
   const finalMatch = useMemo(() => ({ left: sfWinners[0] || { name: 'TBD' }, right: sfWinners[1] || { name: 'TBD' } }), [sfWinners]);
 
-  const finalWinner = useMemo(() => pickTeam({ slot: 'F-0', winner: finalMatch.left as any, opponent: finalMatch.right as any } as Matchup, selectedF || undefined), [finalMatch, selectedF]);
+  const finalWinner = useMemo(() => pickTeam({ slot: 'F-0', winner: finalMatch.left as NameFlag, opponent: finalMatch.right as NameFlag } as Matchup, selectedF || undefined), [finalMatch, selectedF]);
 
   // Handlers that clear downstream selections when upstream changes
   const handleSelectR32 = (index: number, choice: 'left' | 'right') => {
@@ -243,15 +225,16 @@ export default function RoundOf32() {
 
   const handleShareNative = async () => {
     const text = getShareText();
+    const navWithShare = navigator as unknown as { share?: (data: { title?: string; text?: string; url?: string }) => Promise<void> };
     try {
-      if (navigator && (navigator as any).share) {
-        await (navigator as any).share({ title: 'Knockouts - Bracket', text, url: shareUrl });
+      if (navWithShare.share) {
+        await navWithShare.share({ title: 'Knockouts - Bracket', text, url: shareUrl });
       } else {
         // fallback to copy if native not available
         await navigator.clipboard.writeText(`${text} ${shareUrl}`);
         alert('Share text copied to clipboard');
       }
-    } catch (e) {
+    } catch {
       try { await navigator.clipboard.writeText(`${text} ${shareUrl}`); alert('Share text copied to clipboard'); } catch { /* ignore */ }
     }
   };
@@ -322,10 +305,10 @@ export default function RoundOf32() {
               <div key={`r16-${i}`} className="card">
                 <h4>Match {i + 1}</h4>
                 <div className={`team-box ${selectedR16[i] === 'left' ? 'selected' : ''} ${!m.left ? 'disabled' : ''}`} onClick={() => m.left && handleSelectR16(i, 'left')}>
-                  {(m.left as any).flag || ''} {(m.left as any).name}
+                  {(m.left as NameFlag).flag || ''} {(m.left as NameFlag).name}
                 </div>
                 <div className={`team-box ${selectedR16[i] === 'right' ? 'selected' : ''} ${!m.right ? 'disabled' : ''}`} onClick={() => m.right && handleSelectR16(i, 'right')}>
-                  {(m.right as any).flag || ''} {(m.right as any).name}
+                  {(m.right as NameFlag).flag || ''} {(m.right as NameFlag).name}
                 </div>
               </div>
             ))}
@@ -337,10 +320,10 @@ export default function RoundOf32() {
               <div key={`qf-${i}`} className="card">
                 <h4>Match {i + 1}</h4>
                 <div className={`team-box ${selectedQF[i] === 'left' ? 'selected' : ''} ${!m.left ? 'disabled' : ''}`} onClick={() => m.left && handleSelectQF(i, 'left')}>
-                  {(m.left as any).flag || ''} {(m.left as any).name}
+                  {(m.left as NameFlag).flag || ''} {(m.left as NameFlag).name}
                 </div>
                 <div className={`team-box ${selectedQF[i] === 'right' ? 'selected' : ''} ${!m.right ? 'disabled' : ''}`} onClick={() => m.right && handleSelectQF(i, 'right')}>
-                  {(m.right as any).flag || ''} {(m.right as any).name}
+                  {(m.right as NameFlag).flag || ''} {(m.right as NameFlag).name}
                 </div>
               </div>
             ))}
@@ -352,10 +335,10 @@ export default function RoundOf32() {
               <div key={`sf-${i}`} className="card">
                 <h4>Match {i + 1}</h4>
                 <div className={`team-box ${selectedSF[i] === 'left' ? 'selected' : ''} ${!m.left ? 'disabled' : ''}`} onClick={() => m.left && handleSelectSF(i, 'left')}>
-                  {(m.left as any).flag || ''} {(m.left as any).name}
+                  {(m.left as NameFlag).flag || ''} {(m.left as NameFlag).name}
                 </div>
                 <div className={`team-box ${selectedSF[i] === 'right' ? 'selected' : ''} ${!m.right ? 'disabled' : ''}`} onClick={() => m.right && handleSelectSF(i, 'right')}>
-                  {(m.right as any).flag || ''} {(m.right as any).name}
+                  {(m.right as NameFlag).flag || ''} {(m.right as NameFlag).name}
                 </div>
               </div>
             ))}
@@ -366,10 +349,10 @@ export default function RoundOf32() {
             <div className="card">
               <h4>Match 1</h4>
               <div className={`team-box ${selectedF === 'left' ? 'selected' : ''} ${!finalMatch.left ? 'disabled' : ''}`} onClick={() => finalMatch.left && handleSelectF('left')}>
-                {(finalMatch.left as any).flag || ''} {(finalMatch.left as any).name}
+                {(finalMatch.left as NameFlag).flag || ''} {(finalMatch.left as NameFlag).name}
               </div>
               <div className={`team-box ${selectedF === 'right' ? 'selected' : ''} ${!finalMatch.right ? 'disabled' : ''}`} onClick={() => finalMatch.right && handleSelectF('right')}>
-                {(finalMatch.right as any).flag || ''} {(finalMatch.right as any).name}
+                {(finalMatch.right as NameFlag).flag || ''} {(finalMatch.right as NameFlag).name}
               </div>
             </div>
           </div>
