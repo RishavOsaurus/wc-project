@@ -5,6 +5,7 @@ import type { Team } from '../types/worldcup';
 import './RoundOf32.css';
 import { useThirdPlace } from '../contexts/ThirdPlaceContext';
 import type { Matchup } from '../contexts/ThirdPlaceContext';
+import Seo from './Seo';
 
 type StoredTeam = Team & { groupName?: string };
 type NameFlag = { name: string; flag?: string; groupName?: string };
@@ -264,6 +265,13 @@ export default function RoundOf32() {
 
   return (
     <div className="replica-page">
+      <Seo
+        title="Knockouts — WorldCup 2026"
+        description="Build and interact with the Round-of-32 bracket based on group winners and selected third-place teams."
+        url="/round-of-32"
+        image="/image.png"
+        keywords="round of 32, knockouts, World Cup, bracket"
+      />
       <header className="replica-header">
         <div className="replica-left">
           <button className="back-link" onClick={() => navigate('/third-place', { state: { refresh: Date.now() } })}>

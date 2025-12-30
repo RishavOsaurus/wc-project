@@ -10,6 +10,7 @@ import { worldCupGroups } from './data/groups';
 import type { Team } from './types/worldcup';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import RoundOf32 from './components/RoundOf32';
+import Seo from './components/Seo';
 
 function HomeContent() {
   const [groupTeamOrders, setGroupTeamOrders] = useState<Record<string, (Team & { uniqueId: string })[]>>(() => {
@@ -80,6 +81,13 @@ function HomeContent() {
 
   return (
     <div className="app-container">
+      <Seo
+        title="WorldCup — 2026 Group Stage Draw & Knockout Bracket"
+        description="Interactive FIFA World Cup 2026 group draw replica — reorder groups, pick third-place teams, and build your Round-of-32 bracket."
+        url="/"
+        image="/image.png"
+        keywords="World Cup, FIFA 2026, group stage, bracket, third place, knockouts"
+      />
       <header className="app-header">
         <div className="header-content">
           <div className="header-text">

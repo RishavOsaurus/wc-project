@@ -4,6 +4,7 @@ import GroupTable from './GroupTable';
 import type { Team } from '../types/worldcup';
 import { worldCupGroups } from '../data/groups';
 import { useThirdPlace } from '../contexts/ThirdPlaceContext';
+import Seo from './Seo';
 
 const SLOT_ORDER = ['1A', '1B', '1D', '1E', '1G', '1I', '1K', '1L'];
 
@@ -273,6 +274,13 @@ export default function ThirdPlacePage() {
 
   return (
     <div className="replica-page">
+      <Seo
+        title="Third Place — WorldCup 2026"
+        description="Reorder and pin third-place teams to build the Round-of-32 bracket for the World Cup 2026 replica."
+        url="/third-place"
+        image="/image.png"
+        keywords="third place, World Cup, bracket, round of 32"
+      />
       <header className="replica-header">
         <div className="replica-left">
           <Link to="/" className="back-link">
