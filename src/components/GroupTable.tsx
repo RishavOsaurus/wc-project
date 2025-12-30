@@ -176,7 +176,7 @@ export default function GroupTable({ group, onOrderChange, lockAll }: GroupTable
             </tr>
           </thead>
           <SortableContext
-            items={teams.filter(t => !lockAll).map((team) => team.uniqueId)}
+            items={lockAll ? [] : teams.map((team) => team.uniqueId)}
             strategy={verticalListSortingStrategy}
           >
             <tbody>
